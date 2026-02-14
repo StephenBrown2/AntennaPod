@@ -405,6 +405,7 @@
     </plurals>
     <string name="sort">Sort</string>
     <string name="keep_sorted">Keep sorted</string>
+    <string name="spread_evenly">Spread evenly</string>
     <string name="date">Date</string>
     <string name="duration">Duration</string>
     <string name="episode">Episode</string>

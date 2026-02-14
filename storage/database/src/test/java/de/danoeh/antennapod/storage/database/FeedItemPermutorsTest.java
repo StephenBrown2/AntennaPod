@@ -237,4 +237,194 @@ public class FeedItemPermutorsTest {
         }
         return true;
     }
+
+    @Test
+    public void testSmartShuffleSpreadEvenlyDefault() {
+        // Test that spread evenly is the default
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        UserPreferences.init(context);
+        assertTrue("Spread evenly should be enabled by default",
+                UserPreferences.isSmartShuffleSpreadEvenly());
+    }
+
+    @Test
+    public void testSmartShuffleSpreadEvenly() {
+        // Test the "spread evenly" algorithm with multiple feeds
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        UserPreferences.init(context);
+        UserPreferences.setSmartShuffleSpreadEvenly(true);
+
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW);
+        List<FeedItem> itemList = getSmartShuffleTestList();
+
+        // Expected order: episodes should be spread out evenly
+        // Feed A (3 eps): A1, A2, A3
+        // Feed B (2 eps): B1, B2
+        // Feed C (1 ep): C1
+        // Spread evenly places largest first, spreading across slots
+        permutor.reorder(itemList);
+
+        // Verify no null items and size is correct
+        for (FeedItem item : itemList) {
+            assertNotNull("Item should not be null", item);
+        }
+        assertTrue("List should have 6 items", itemList.size() == 6);
+
+        // Verify episodes from same feed maintain order
+        int lastA = -1, lastB = -1, lastC = -1;
+        for (FeedItem item : itemList) {
+            if (item.getTitle().startsWith("A")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed A episodes should be in order", episodeNum > lastA);
+                lastA = episodeNum;
+            } else if (item.getTitle().startsWith("B")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed B episodes should be in order", episodeNum > lastB);
+                lastB = episodeNum;
+            } else if (item.getTitle().startsWith("C")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed C episodes should be in order", episodeNum > lastC);
+                lastC = episodeNum;
+            }
+        }
+    }
+
+    @Test
+    public void testSmartShuffleLegacy() {
+        // Test the legacy smart shuffle algorithm with single-episode feed prioritization
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        UserPreferences.init(context);
+        // Force set to false to ensure legacy algorithm is used
+        UserPreferences.setSmartShuffleSpreadEvenly(false);
+
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW);
+        List<FeedItem> itemList = getSmartShuffleTestList();
+
+        permutor.reorder(itemList);
+
+        // Verify no null items and size is correct
+        for (FeedItem item : itemList) {
+            assertNotNull("Item should not be null", item);
+        }
+        assertTrue("List should have 6 items", itemList.size() == 6);
+
+        // Verify episodes from same feed maintain order
+        int lastA = -1, lastB = -1, lastC = -1;
+        for (FeedItem item : itemList) {
+            if (item.getTitle().startsWith("A")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed A episodes should be in order", episodeNum > lastA);
+                lastA = episodeNum;
+            } else if (item.getTitle().startsWith("B")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed B episodes should be in order", episodeNum > lastB);
+                lastB = episodeNum;
+            } else if (item.getTitle().startsWith("C")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed C episodes should be in order", episodeNum > lastC);
+                lastC = episodeNum;
+            }
+        }
+
+        // Verify that single-episode feed C appears first
+        assertTrue("First item should be from feed C (single episode)", itemList.get(0).getTitle().startsWith("C"));
+    }
+
+    @Test
+    public void testSmartShuffleToggleBetweenAlgorithms() {
+        // Test that toggling between algorithms works correctly
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        UserPreferences.init(context);
+
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW);
+
+        // Get spread evenly result
+        UserPreferences.setSmartShuffleSpreadEvenly(true);
+        List<FeedItem> spreadEvenlyList = getSmartShuffleTestList();
+        permutor.reorder(spreadEvenlyList);
+
+        // Verify result is valid
+        for (FeedItem item : spreadEvenlyList) {
+            assertNotNull("Item should not be null", item);
+        }
+        assertTrue("Spread evenly list should have 6 items", spreadEvenlyList.size() == 6);
+
+        // Get legacy result
+        UserPreferences.setSmartShuffleSpreadEvenly(false);
+        List<FeedItem> legacyList = getSmartShuffleTestList();
+        permutor.reorder(legacyList);
+
+        // Verify result is valid
+        for (FeedItem item : legacyList) {
+            assertNotNull("Item should not be null", item);
+        }
+        assertTrue("Legacy list should have 6 items", legacyList.size() == 6);
+
+        // Verify episodes from same feed maintain order in legacy result
+        int lastA = -1, lastB = -1, lastC = -1;
+        for (FeedItem item : legacyList) {
+            if (item.getTitle().startsWith("A")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed A episodes should be in order in legacy", episodeNum > lastA);
+                lastA = episodeNum;
+            } else if (item.getTitle().startsWith("B")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed B episodes should be in order in legacy", episodeNum > lastB);
+                lastB = episodeNum;
+            } else if (item.getTitle().startsWith("C")) {
+                int episodeNum = Integer.parseInt(item.getTitle().substring(1));
+                assertTrue("Feed C episodes should be in order in legacy", episodeNum > lastC);
+                lastC = episodeNum;
+            }
+        }
+    }
+
+    /**
+     * Generates a list with test data for smart shuffle testing.
+     * Creates 6 items from 3 feeds (Feed A: 3 items, Feed B: 2 items, Feed C: 1 item)
+     */
+    private List<FeedItem> getSmartShuffleTestList() {
+        List<FeedItem> itemList = new ArrayList<>();
+
+        Calendar calendar = Calendar.getInstance();
+
+        // Feed A - 3 episodes
+        Feed feedA = new Feed(null, null, "Feed A");
+        feedA.setId(1L);
+        for (int i = 1; i <= 3; i++) {
+            calendar.set(2019, 0, i);
+            FeedItem item = new FeedItem(100 + i, "A" + i, null, null, calendar.getTime(), 0, feedA);
+            item.setFeedId(1L);  // Set the feedId explicitly
+            FeedMedia media = new FeedMedia(0, item, 1000, 0, 100, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0);
+            item.setMedia(media);
+            itemList.add(item);
+        }
+
+        // Feed B - 2 episodes
+        Feed feedB = new Feed(null, null, "Feed B");
+        feedB.setId(2L);
+        for (int i = 1; i <= 2; i++) {
+            calendar.set(2019, 1, i);
+            FeedItem item = new FeedItem(200 + i, "B" + i, null, null, calendar.getTime(), 0, feedB);
+            item.setFeedId(2L);  // Set the feedId explicitly
+            FeedMedia media = new FeedMedia(0, item, 2000, 0, 200, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0);
+            item.setMedia(media);
+            itemList.add(item);
+        }
+
+        // Feed C - 1 episode
+        Feed feedC = new Feed(null, null, "Feed C");
+        feedC.setId(3L);
+        calendar.set(2019, 2, 1);
+        FeedItem item = new FeedItem(300, "C1", null, null, calendar.getTime(), 0, feedC);
+        item.setFeedId(3L);  // Set the feedId explicitly
+        FeedMedia media = new FeedMedia(0, item, 3000, 0, 300, null, null, null,
+                System.currentTimeMillis(), null, 0, 0);
+        item.setMedia(media);
+        itemList.add(item);
+
+        return itemList;
+    }
 }

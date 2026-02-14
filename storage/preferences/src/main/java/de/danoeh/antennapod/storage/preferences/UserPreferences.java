@@ -67,6 +67,7 @@ public abstract class UserPreferences {
     public static final String PREF_GLOBAL_DEFAULT_SORTED_ORDER = "prefGlobalDefaultSortedOrder";
     public static final String PREF_QUEUE_KEEP_SORTED = "prefQueueKeepSorted";
     public static final String PREF_QUEUE_KEEP_SORTED_ORDER = "prefQueueKeepSortedOrder";
+    public static final String PREF_SMART_SHUFFLE_SPREAD_EVENLY = "prefSmartShuffleSpreadEvenly";
     public static final String PREF_NEW_EPISODES_ACTION = "prefNewEpisodesAction";
     private static final String PREF_DOWNLOADS_SORTED_ORDER = "prefDownloadSortedOrder";
     private static final String PREF_INBOX_SORTED_ORDER = "prefInboxSortedOrder";
@@ -825,6 +826,25 @@ public abstract class UserPreferences {
             return;
         }
         prefs.edit().putString(PREF_QUEUE_KEEP_SORTED_ORDER, sortOrder.name()).apply();
+    }
+
+    /**
+     * Returns whether smart shuffle should spread episodes evenly across the queue.
+     * When false, uses legacy algorithm that clusters episodes from podcasts with fewer episodes.
+     *
+     * @return {@code true} for spread evenly (default), {@code false} for legacy algorithm
+     */
+    public static boolean isSmartShuffleSpreadEvenly() {
+        return prefs.getBoolean(PREF_SMART_SHUFFLE_SPREAD_EVENLY, true);
+    }
+
+    /**
+     * Sets whether smart shuffle should spread episodes evenly across the queue.
+     *
+     * @param spreadEvenly {@code true} to spread evenly, {@code false} for legacy algorithm
+     */
+    public static void setSmartShuffleSpreadEvenly(boolean spreadEvenly) {
+        prefs.edit().putBoolean(PREF_SMART_SHUFFLE_SPREAD_EVENLY, spreadEvenly).apply();
     }
 
     public static FeedPreferences.NewEpisodesAction getNewEpisodesAction() {

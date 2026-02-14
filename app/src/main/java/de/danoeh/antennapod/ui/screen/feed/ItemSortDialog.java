@@ -29,6 +29,8 @@ public class ItemSortDialog extends BottomSheetDialogFragment {
         populateList();
         viewBinding.keepSortedCheckbox.setOnCheckedChangeListener(
                 (buttonView, isChecked) -> ItemSortDialog.this.onSelectionChanged());
+        viewBinding.spreadEvenlyCheckbox.setOnCheckedChangeListener(
+                (buttonView, isChecked) -> ItemSortDialog.this.onSelectionChanged());
         return viewBinding.getRoot();
     }
 

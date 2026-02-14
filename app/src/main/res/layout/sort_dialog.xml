@@ -17,12 +17,26 @@
         app:useDefaultMargins="true"
         app:alignmentMode="alignBounds" />
 
-    <CheckBox
-        android:id="@+id/keepSortedCheckbox"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:text="@string/keep_sorted"
-        tools:visibility="visible" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <CheckBox
+            android:id="@+id/keepSortedCheckbox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/keep_sorted" />
+
+        <CheckBox
+            android:id="@+id/spreadEvenlyCheckbox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/spread_evenly" />
+
+    </LinearLayout>
 
 </LinearLayout>

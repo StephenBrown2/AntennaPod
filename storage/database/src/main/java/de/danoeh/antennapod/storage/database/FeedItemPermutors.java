@@ -172,6 +172,22 @@ public class FeedItemPermutors {
             feeds.add(mapEntry.getValue());
         }
 
+        // Check user preference for spreading algorithm
+        if (UserPreferences.isSmartShuffleSpreadEvenly()) {
+            smartShuffleSpreadEvenly(queue, feeds);
+        } else {
+            smartShuffleLegacy(queue, feeds, ascending);
+        }
+    }
+
+    /**
+     * Spreads episodes from each podcast evenly throughout the queue.
+     * This is the newer "Spread Evenly" algorithm.
+     *
+     * @param queue A (modifiable) list to be filled with reordered items
+     * @param feeds List of feed lists sorted by size (largest first)
+     */
+    private static void smartShuffleSpreadEvenly(List<FeedItem> queue, List<List<FeedItem>> feeds) {
         ArrayList<Integer> emptySlots = new ArrayList<>();
         for (int i = 0; i < queue.size(); i++) {
             queue.set(i, null);
@@ -200,6 +216,96 @@ public class FeedItemPermutors {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Legacy smart shuffle algorithm that clusters episodes from podcasts with fewer episodes.
+     * Single-episode podcasts are placed first (sorted by feed title), followed by a spread
+     * algorithm for podcasts with two or more episodes.
+     *
+     * Given a queue like `ABCDDEEEEEEEEEE`:
+     * Single-episode feeds (A) are placed first: `A`
+     * The remaining Smart Shuffle algorithm spreads the multi-episode feeds out:
+     * - Spread algorithm applied to B(2), C(3), D(2), E(5) results in interleaved episodes
+     * - Final queue example: `A, B1, C1, D1, E1, B2, C2, D2, E2, C3, E3, E4, E5`
+     *
+     * This ensures that single-episode podcasts (typically shows the user wants to keep up with)
+     * are always encountered first in the queue.
+     *
+     * For multi-episode podcasts, the algorithm calculates a spread factor to distribute
+     * episodes throughout the remainder of the queue, avoiding long clusters of the same feed.
+     *
+     * @param queue A (modifiable) list to be filled with reordered items
+     * @param feeds List of feed lists (will be sorted by feed title within this method)
+     */
+    private static void smartShuffleLegacy(List<FeedItem> queue, List<List<FeedItem>> feeds, boolean ascending) {
+        // Separate single-episode feeds from multi-episode feeds
+        List<List<FeedItem>> singleEpisodeFeeds = new ArrayList<>();
+        List<List<FeedItem>> multiEpisodeFeeds = new ArrayList<>();
+        for (List<FeedItem> feedItems : feeds) {
+            if (feedItems.size() == 1) {
+                singleEpisodeFeeds.add(feedItems);
+            } else {
+                multiEpisodeFeeds.add(feedItems);
+            }
+        }
+
+        // Sort single-episode feeds by ascending/descending pubdate
+        Collections.sort(singleEpisodeFeeds, ascending
+                ? (f1, f2) -> f1.get(0).getPubDate().compareTo(f2.get(0).getPubDate())
+                : (f1, f2) -> f2.get(0).getPubDate().compareTo(f1.get(0).getPubDate()));
+
+        // Clear queue and add single-episode feeds first
+        queue.clear();
+        for (List<FeedItem> feedItems : singleEpisodeFeeds) {
+            queue.addAll(feedItems);
+        }
+
+        // If there are no multi-episode feeds, we're done
+        if (multiEpisodeFeeds.isEmpty()) {
+            return;
+        }
+
+        // Calculate the spread for multi-episode feeds
+        long spread = 0;
+        for (List<FeedItem> feedItems : multiEpisodeFeeds) {
+            if (spread == 0) {
+                spread = feedItems.size();
+            } else if (spread % feedItems.size() != 0) {
+                spread *= feedItems.size();
+            }
+        }
+
+        // Create a list of the multi-episode FeedItems lists, and sort it by feed title (ascending).
+        // Doing this ensures that the feed order we use is predictable/deterministic.
+        Collections.sort(multiEpisodeFeeds,
+                (f1, f2) -> f1.get(0).getFeed().getTitle().compareTo(f2.get(0).getFeed().getTitle()));
+
+        // Spread each episode out
+        Map<Long, List<FeedItem>> spreadItems = new HashMap<>();
+        for (List<FeedItem> feedItems : multiEpisodeFeeds) {
+            long thisSpread = spread / feedItems.size();
+            if (thisSpread == 0) {
+                thisSpread = 1;
+            }
+            // Starting from 0 ensures we front-load, so the queue starts with one episode from
+            // each feed in the queue
+            long itemSpread = 0;
+            for (FeedItem feedItem : feedItems) {
+                if (!spreadItems.containsKey(itemSpread)) {
+                    spreadItems.put(itemSpread, new ArrayList<>());
+                }
+                spreadItems.get(itemSpread).add(feedItem);
+                itemSpread += thisSpread;
+            }
+        }
+
+        // Go through the spread items and add them to the queue (after single-episode feeds)
+        List<Long> spreads = new ArrayList<>(spreadItems.keySet());
+        Collections.sort(spreads);
+        for (long itemSpread : spreads) {
+            queue.addAll(spreadItems.get(itemSpread));
         }
     }
 }

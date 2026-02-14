@@ -353,9 +353,14 @@ public class DBWriter {
                 FeedItem item = DBReader.getFeedItem(itemId);
                 if (item != null) {
                     queue.add(index, item);
+                    List<QueueEvent> events = new ArrayList<>();
+                    events.add(QueueEvent.added(item, index));
+                    applySortOrder(queue, events);
                     adapter.setQueue(queue);
                     item.addTag(FeedItem.TAG_QUEUE);
-                    EventBus.getDefault().post(QueueEvent.added(item, index));
+                    for (QueueEvent event : events) {
+                        EventBus.getDefault().post(event);
+                    }
                     EventBus.getDefault().post(new FeedItemEvent(Collections.singletonList(item), false));
                     if (item.isNew()) {
                         DBWriter.markItemsPlayed(FeedItem.UNPLAYED, false, Collections.singletonList(item));

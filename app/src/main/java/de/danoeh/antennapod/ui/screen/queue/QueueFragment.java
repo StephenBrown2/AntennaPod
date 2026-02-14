@@ -590,10 +590,14 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                 sortOrder = UserPreferences.getQueueKeepSortedOrder();
             }
             final View view = super.onCreateView(inflater, container, savedInstanceState);
-            viewBinding.keepSortedCheckbox.setVisibility(View.VISIBLE);
+
+            // Set initial states
             viewBinding.keepSortedCheckbox.setChecked(UserPreferences.isQueueKeepSorted());
-            // Disable until something gets selected
             viewBinding.keepSortedCheckbox.setEnabled(UserPreferences.isQueueKeepSorted());
+
+            viewBinding.spreadEvenlyCheckbox.setChecked(UserPreferences.isSmartShuffleSpreadEvenly());
+            viewBinding.spreadEvenlyCheckbox.setVisibility(isSmartShuffleSelected() ? View.VISIBLE : View.GONE);
+
             return view;
         }
 
@@ -608,9 +612,17 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
             super.onAddItem(title, ascending, descending, ascendingIsDefault);
         }
 
+        private boolean isSmartShuffleSelected() {
+            return sortOrder == SortOrder.SMART_SHUFFLE_OLD_NEW || sortOrder == SortOrder.SMART_SHUFFLE_NEW_OLD;
+        }
+
         @Override
         protected void onSelectionChanged() {
             super.onSelectionChanged();
+
+            // Show/hide spread evenly checkbox based on sort order
+            viewBinding.spreadEvenlyCheckbox.setVisibility(isSmartShuffleSelected() ? View.VISIBLE : View.GONE);
+
             if (sortOrder == SortOrder.RANDOM) {
                 turnedOffKeepSortedForRandom |= viewBinding.keepSortedCheckbox.isChecked();
                 viewBinding.keepSortedCheckbox.setChecked(false);
@@ -624,7 +636,27 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
             }
             UserPreferences.setQueueKeepSorted(viewBinding.keepSortedCheckbox.isChecked());
             UserPreferences.setQueueKeepSortedOrder(sortOrder);
+            // Only persist the "Spread evenly" preference when Smart Shuffle is selected
+            if (isSmartShuffleSelected()) {
+                UserPreferences.setSmartShuffleSpreadEvenly(viewBinding.spreadEvenlyCheckbox.isChecked());
+            }
             DBWriter.reorderQueue(sortOrder, true);
+        }
+
+        @Override
+        public void onDismiss(@NonNull DialogInterface dialog) {
+            // Ensure current checkbox states are persisted even if listeners didn't fire.
+            if (viewBinding != null) {
+                UserPreferences.setQueueKeepSorted(viewBinding.keepSortedCheckbox.isChecked());
+                UserPreferences.setQueueKeepSortedOrder(sortOrder);
+                if (isSmartShuffleSelected()) {
+                    UserPreferences.setSmartShuffleSpreadEvenly(viewBinding.spreadEvenlyCheckbox.isChecked());
+                }
+            }
+            // Only call super when the fragment is actually added to avoid problems in unit tests
+            if (isAdded()) {
+                super.onDismiss(dialog);
+            }
         }
     }
 

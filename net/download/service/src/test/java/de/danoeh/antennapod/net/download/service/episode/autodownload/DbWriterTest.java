@@ -629,6 +629,40 @@ public class DbWriterTest {
         adapter.close();
     }
 
+        @Test
+        public void testAddQueueItemAtAppliesKeepSortedOrder() throws Exception {
+        UserPreferences.setQueueKeepSorted(true);
+        UserPreferences.setQueueKeepSortedOrder(SortOrder.DATE_OLD_NEW);
+
+        Feed feed = new Feed("url", null, "title");
+        feed.setItems(new ArrayList<>());
+
+        FeedItem newest = new FeedItem(0, "newest", "newest", "link-newest",
+            new Date(3000), FeedItem.PLAYED, feed);
+        newest.setMedia(new FeedMedia(newest, "", 0, ""));
+        feed.getItems().add(newest);
+
+        FeedItem oldest = new FeedItem(0, "oldest", "oldest", "link-oldest",
+            new Date(1000), FeedItem.PLAYED, feed);
+        oldest.setMedia(new FeedMedia(oldest, "", 0, ""));
+        feed.getItems().add(oldest);
+
+        FeedItem middle = new FeedItem(0, "middle", "middle", "link-middle",
+            new Date(2000), FeedItem.PLAYED, feed);
+        middle.setMedia(new FeedMedia(middle, "", 0, ""));
+        feed.getItems().add(middle);
+
+        withPodDB(adapter -> {
+            adapter.setCompleteFeed(feed);
+            adapter.setQueue(List.of(newest, oldest));
+        });
+
+        DBWriter.addQueueItemAt(context, middle.getId(), 0).get(TIMEOUT, TimeUnit.SECONDS);
+
+        assertQueueByItemIds("Queue should be re-sorted after addQueueItemAt when keep sorted is enabled",
+            oldest.getId(), middle.getId(), newest.getId());
+        }
+
     @Test
     public void testClearQueue() throws Exception {
         final int numItems = 10;
