@@ -362,6 +362,25 @@ public abstract class UserPreferences {
         BACK, FRONT, AFTER_CURRENTLY_PLAYING, RANDOM
     }
 
+    public enum ContinuousPlaybackMode {
+        OFF(0), PLAY_NEXT(1), PLAY_TOP(2);
+
+        public final int code;
+
+        ContinuousPlaybackMode(int code) {
+            this.code = code;
+        }
+
+        public static ContinuousPlaybackMode fromCode(int code) {
+            for (ContinuousPlaybackMode mode : ContinuousPlaybackMode.values()) {
+                if (mode.code == code) {
+                    return mode;
+                }
+            }
+            return OFF;
+        }
+    }
+
     @NonNull
     public static EnqueueLocation getEnqueueLocation() {
         String valStr = prefs.getString(PREF_ENQUEUE_LOCATION, EnqueueLocation.BACK.name());
@@ -402,16 +421,48 @@ public abstract class UserPreferences {
                 String.valueOf(KeyEvent.KEYCODE_MEDIA_REWIND)));
     }
 
-
-    public static boolean isFollowQueue() {
-        return prefs.getBoolean(PREF_FOLLOW_QUEUE, true);
+    /**
+     * Get the current continuous playback mode.
+     * Migrates from old boolean or string preference if necessary.
+     * @return ContinuousPlaybackMode representing what should play next
+     */
+    @NonNull
+    public static ContinuousPlaybackMode getContinuousPlaybackMode() {
+        try {
+            int intValue = prefs.getInt(PREF_FOLLOW_QUEUE, ContinuousPlaybackMode.PLAY_NEXT.code);
+            return ContinuousPlaybackMode.fromCode(intValue);
+        } catch (ClassCastException e) {
+            Log.w(TAG, "PREF_FOLLOW_QUEUE is not integer. Expected PreferenceUpgrader to normalize this.", e);
+            return ContinuousPlaybackMode.PLAY_NEXT;
+        }
     }
 
     /**
-     * Set to true to enable Continuous Playback
+     * Set the continuous playback mode.
+     * @param mode The ContinuousPlaybackMode to set
      */
+    public static void setContinuousPlaybackMode(@NonNull ContinuousPlaybackMode mode) {
+        prefs.edit().putInt(PREF_FOLLOW_QUEUE, mode.code).apply();
+    }
+
+    /**
+     * Returns true if continuous playback is enabled (not OFF mode).
+     *
+     * @deprecated Use {@link #getContinuousPlaybackMode()} instead.
+     */
+    @Deprecated
+    public static boolean isFollowQueue() {
+        return getContinuousPlaybackMode() != ContinuousPlaybackMode.OFF;
+    }
+
+    /**
+     * Set to true to enable Continuous Playback (PLAY_NEXT mode).
+     *
+     * @deprecated Use {@link #setContinuousPlaybackMode(ContinuousPlaybackMode)} instead.
+     */
+    @Deprecated
     public static void setFollowQueue(boolean value) {
-        prefs.edit().putBoolean(UserPreferences.PREF_FOLLOW_QUEUE, value).apply();
+        setContinuousPlaybackMode(value ? ContinuousPlaybackMode.PLAY_NEXT : ContinuousPlaybackMode.OFF);
     }
 
     public static boolean shouldSkipKeepEpisode() {

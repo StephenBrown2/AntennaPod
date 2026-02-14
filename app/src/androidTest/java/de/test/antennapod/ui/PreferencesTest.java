@@ -167,14 +167,49 @@ public class PreferencesTest {
     @Test
     public void testContinuousPlayback() {
         clickPreference(R.string.playback_pref);
-        final boolean continuousPlayback = UserPreferences.isFollowQueue();
+        final UserPreferences.ContinuousPlaybackMode continuousPlaybackMode = UserPreferences.getContinuousPlaybackMode();
         clickPreference(R.string.pref_followQueue_title);
+        // Click on "Off" option
+        onView(withText(R.string.pref_continuous_playback_off)).perform(click());
         Awaitility.await().atMost(1000, MILLISECONDS)
-                .until(() -> continuousPlayback != UserPreferences.isFollowQueue());
+                .until(() -> UserPreferences.getContinuousPlaybackMode() == UserPreferences.ContinuousPlaybackMode.OFF);
+        // Change back to original mode
         clickPreference(R.string.pref_followQueue_title);
+        String originalModeText = continuousPlaybackMode == UserPreferences.ContinuousPlaybackMode.PLAY_NEXT
+                ? res.getString(R.string.pref_continuous_playback_next)
+                : res.getString(R.string.pref_continuous_playback_top);
+        onView(withText(originalModeText)).perform(click());
         Awaitility.await().atMost(1000, MILLISECONDS)
-                .until(() -> continuousPlayback == UserPreferences.isFollowQueue());
+                .until(() -> continuousPlaybackMode == UserPreferences.getContinuousPlaybackMode());
     }
+
+        @Test
+        public void testPlaybackPreferencesScreenHandlesLegacyFollowQueueBooleanFalseValue() {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activityTestRule.getActivity());
+                prefs.edit().putBoolean(UserPreferences.PREF_FOLLOW_QUEUE, false).commit();
+
+                activityTestRule.finishActivity();
+                activityTestRule.launchActivity(new Intent());
+
+                clickPreference(R.string.playback_pref);
+                onView(withText(R.string.pref_followQueue_title)).check(matches(isDisplayed()));
+                Awaitility.await().atMost(1000, MILLISECONDS)
+                                .until(() -> UserPreferences.getContinuousPlaybackMode() == UserPreferences.ContinuousPlaybackMode.OFF);
+        }
+
+        @Test
+        public void testPlaybackPreferencesScreenHandlesLegacyFollowQueueBooleanTrueValue() {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activityTestRule.getActivity());
+                prefs.edit().putBoolean(UserPreferences.PREF_FOLLOW_QUEUE, true).commit();
+
+                activityTestRule.finishActivity();
+                activityTestRule.launchActivity(new Intent());
+
+                clickPreference(R.string.playback_pref);
+                onView(withText(R.string.pref_followQueue_title)).check(matches(isDisplayed()));
+                Awaitility.await().atMost(1000, MILLISECONDS)
+                                .until(() -> UserPreferences.getContinuousPlaybackMode() == UserPreferences.ContinuousPlaybackMode.PLAY_NEXT);
+        }
 
     @Test
     public void testAutoDelete() {

@@ -883,7 +883,19 @@ public class Media3PlaybackService extends MediaLibraryService {
         }
         int startPosition = playbackStartPosition;
         queueLoaderDisposable = Maybe.fromCallable(() -> {
-            FeedItem nextItem = DBReader.getNextInQueue(item);
+            FeedItem nextItem;
+            if (UserPreferences.getContinuousPlaybackMode() == UserPreferences.ContinuousPlaybackMode.PLAY_TOP) {
+                // Play from the top of the queue, skipping the episode that just finished
+                nextItem = null;
+                for (FeedItem queueItem : DBReader.getQueue()) {
+                    if (queueItem.getId() != item.getId()) {
+                        nextItem = queueItem;
+                        break;
+                    }
+                }
+            } else {
+                nextItem = DBReader.getNextInQueue(item);
+            }
             boolean hasNext = nextItem != null && nextItem.getMedia() != null;
             updateDatabaseAfterPlayback(media, startPosition, ended, wasSkipped, hasNext);
             if (hasNext) {
@@ -902,7 +914,8 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 return;
                             }
                             switchToPlayable(nextMedia);
-                            player.setPlayWhenReady(UserPreferences.isFollowQueue());
+                            player.setPlayWhenReady(UserPreferences.getContinuousPlaybackMode()
+                                    != UserPreferences.ContinuousPlaybackMode.OFF);
                             player.setMediaItem(nextMediaItem, SkipUtils.skipIntroIfNecessary(this, nextMedia));
                             player.prepare();
                             if (mediaLoaderDisposable != null) {
