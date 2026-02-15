@@ -114,6 +114,7 @@ public abstract class UserPreferences {
     // Other
     private static final String PREF_DATA_FOLDER = "prefDataFolder";
     public static final String PREF_DELETE_REMOVES_FROM_QUEUE = "prefDeleteRemovesFromQueue";
+    public static final String PREF_MARK_PLAYED_REMOVES_FROM_QUEUE = "prefMarkPlayedRemovesFromQueue";
     public static final String PREF_DOWNLOADS_BUTTON_ACTION = "prefDownloadsButtonAction";
     private static final String PREF_AUTOMATIC_EXPORT_FOLDER = "prefAutomaticExportFolder";
     private static final String PREF_FIRST_SUBSCRIPTION_TIME = "prefFirstSubscriptionTime";
@@ -436,6 +437,10 @@ public abstract class UserPreferences {
 
     public static boolean shouldDeleteRemoveFromQueue() {
         return prefs.getBoolean(PREF_DELETE_REMOVES_FROM_QUEUE, false);
+    }
+
+    public static boolean shouldMarkPlayedRemoveFromQueue() {
+        return prefs.getBoolean(PREF_MARK_PLAYED_REMOVES_FROM_QUEUE, false);
     }
 
     public static boolean shouldDownloadsButtonActionPlay() {
