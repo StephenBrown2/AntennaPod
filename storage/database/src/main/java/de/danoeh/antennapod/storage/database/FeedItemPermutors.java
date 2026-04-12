@@ -277,10 +277,9 @@ public class FeedItemPermutors {
             }
         }
 
-        // Create a list of the multi-episode FeedItems lists, and sort it by feed title (ascending).
-        // Doing this ensures that the feed order we use is predictable/deterministic.
+        // Sort multi-episode feed lists by the pubDate of their first episode.
         Collections.sort(multiEpisodeFeeds,
-                (f1, f2) -> f1.get(0).getFeed().getTitle().compareTo(f2.get(0).getFeed().getTitle()));
+            (f1, f2) -> f1.get(0).getPubDate().compareTo(f2.get(0).getPubDate()));
 
         // Spread each episode out
         Map<Long, List<FeedItem>> spreadItems = new HashMap<>();
