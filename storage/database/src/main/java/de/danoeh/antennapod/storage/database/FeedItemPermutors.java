@@ -221,16 +221,16 @@ public class FeedItemPermutors {
 
     /**
      * Legacy smart shuffle algorithm that clusters episodes from podcasts with fewer episodes.
-     * Single-episode podcasts are placed first (sorted by feed title), followed by a spread
-     * algorithm for podcasts with two or more episodes.
+     * Low-episode podcasts are placed first (sorted by feed title), followed by a spread
+     * algorithm for podcasts with more episodes.
      *
      * Given a queue like `ABCDDEEEEEEEEEE`:
-     * Single-episode feeds (A) are placed first: `A`
+     * Low-episode feeds (A) are placed first: `A`
      * The remaining Smart Shuffle algorithm spreads the multi-episode feeds out:
      * - Spread algorithm applied to B(2), C(3), D(2), E(5) results in interleaved episodes
      * - Final queue example: `A, B1, C1, D1, E1, B2, C2, D2, E2, C3, E3, E4, E5`
      *
-     * This ensures that single-episode podcasts (typically shows the user wants to keep up with)
+     * This ensures that low-episode podcasts (typically shows the user wants to keep up with)
      * are always encountered first in the queue.
      *
      * For multi-episode podcasts, the algorithm calculates a spread factor to distribute
@@ -238,28 +238,37 @@ public class FeedItemPermutors {
      *
      * @param queue A (modifiable) list to be filled with reordered items
      * @param feeds List of feed lists (will be sorted by feed title within this method)
+     * @param ascending {@code true} to use ascending pubdate in the reordering; {@code false} for descending
      */
     private static void smartShuffleLegacy(List<FeedItem> queue, List<List<FeedItem>> feeds, boolean ascending) {
-        // Separate single-episode feeds from multi-episode feeds
-        List<List<FeedItem>> singleEpisodeFeeds = new ArrayList<>();
+        // Separate low-episode feeds from multi-episode feeds
+        List<List<FeedItem>> lowEpisodeFeeds = new ArrayList<>();
         List<List<FeedItem>> multiEpisodeFeeds = new ArrayList<>();
         for (List<FeedItem> feedItems : feeds) {
-            if (feedItems.size() == 1) {
-                singleEpisodeFeeds.add(feedItems);
+            if (feedItems.size() <= 5) {
+                lowEpisodeFeeds.add(feedItems);
             } else {
                 multiEpisodeFeeds.add(feedItems);
             }
         }
 
-        // Sort single-episode feeds by ascending/descending pubdate
-        Collections.sort(singleEpisodeFeeds, ascending
+        // Sort low-episode feeds by ascending/descending pubdate
+        Collections.sort(lowEpisodeFeeds, ascending
                 ? (f1, f2) -> f1.get(0).getPubDate().compareTo(f2.get(0).getPubDate())
                 : (f1, f2) -> f2.get(0).getPubDate().compareTo(f1.get(0).getPubDate()));
 
-        // Clear queue and add single-episode feeds first
+        // Clear queue and add low-episode feeds first by alternating episodes
         queue.clear();
-        for (List<FeedItem> feedItems : singleEpisodeFeeds) {
-            queue.addAll(feedItems);
+        int maxFeedSize = 0;
+        for (List<FeedItem> feedItems : lowEpisodeFeeds) {
+            maxFeedSize = Math.max(maxFeedSize, feedItems.size());
+        }
+        for (int i = 0; i < maxFeedSize; i++) {
+            for (List<FeedItem> feedItems : lowEpisodeFeeds) {
+                if (i < feedItems.size()) {
+                    queue.add(feedItems.get(i));
+                }
+            }
         }
 
         // If there are no multi-episode feeds, we're done
@@ -277,9 +286,10 @@ public class FeedItemPermutors {
             }
         }
 
-        // Sort multi-episode feed lists by the pubDate of their first episode.
-        Collections.sort(multiEpisodeFeeds,
-            (f1, f2) -> f1.get(0).getPubDate().compareTo(f2.get(0).getPubDate()));
+        // Sort multi-episode feeds by ascending/descending pubdate of their first episode.
+        Collections.sort(multiEpisodeFeeds, ascending
+                ? (f1, f2) -> f1.get(0).getPubDate().compareTo(f2.get(0).getPubDate())
+                : (f1, f2) -> f2.get(0).getPubDate().compareTo(f1.get(0).getPubDate()));
 
         // Spread each episode out
         Map<Long, List<FeedItem>> spreadItems = new HashMap<>();
