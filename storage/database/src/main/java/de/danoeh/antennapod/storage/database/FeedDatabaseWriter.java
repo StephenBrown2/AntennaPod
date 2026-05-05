@@ -145,6 +145,7 @@ public abstract class FeedDatabaseWriter {
                 } else {
                     Log.d(TAG, "Found new item: " + item.getTitle());
                     item.setFeed(savedFeed);
+                    item.setFeedId(savedFeed.getId());
 
                     if (idx >= savedFeed.getItems().size()) {
                         savedFeed.getItems().add(item);
