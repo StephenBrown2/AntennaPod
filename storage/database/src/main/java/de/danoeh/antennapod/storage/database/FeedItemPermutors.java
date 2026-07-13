@@ -221,8 +221,8 @@ public class FeedItemPermutors {
 
     /**
      * Legacy smart shuffle algorithm that clusters episodes from podcasts with fewer episodes.
-     * Low-episode podcasts are placed first (sorted by feed title), followed by a spread
-     * algorithm for podcasts with more episodes.
+     * Podcasts with fewer than 5 queued episodes are placed first (ordered by the pubdate of
+     * their first episode), followed by a spread algorithm for podcasts with more episodes.
      *
      * Given a queue like `ABCDDEEEEEEEEEE`:
      * Low-episode feeds (A) are placed first: `A`
@@ -237,7 +237,7 @@ public class FeedItemPermutors {
      * episodes throughout the remainder of the queue, avoiding long clusters of the same feed.
      *
      * @param queue A (modifiable) list to be filled with reordered items
-     * @param feeds List of feed lists (will be sorted by feed title within this method)
+     * @param feeds List of feed lists (will be sorted by first episode pubdate within this method)
      * @param ascending {@code true} to use ascending pubdate in the reordering; {@code false} for descending
      */
     private static void smartShuffleLegacy(List<FeedItem> queue, List<List<FeedItem>> feeds, boolean ascending) {
@@ -245,7 +245,7 @@ public class FeedItemPermutors {
         List<List<FeedItem>> lowEpisodeFeeds = new ArrayList<>();
         List<List<FeedItem>> multiEpisodeFeeds = new ArrayList<>();
         for (List<FeedItem> feedItems : feeds) {
-            if (feedItems.size() <= 5) {
+            if (feedItems.size() < 5) {
                 lowEpisodeFeeds.add(feedItems);
             } else {
                 multiEpisodeFeeds.add(feedItems);

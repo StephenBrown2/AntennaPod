@@ -9,7 +9,12 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -271,7 +276,9 @@ public class FeedItemPermutorsTest {
         assertTrue("List should have 6 items", itemList.size() == 6);
 
         // Verify episodes from same feed maintain order
-        int lastA = -1, lastB = -1, lastC = -1;
+        int lastA = -1;
+        int lastB = -1;
+        int lastC = -1;
         for (FeedItem item : itemList) {
             if (item.getTitle().startsWith("A")) {
                 int episodeNum = Integer.parseInt(item.getTitle().substring(1));
@@ -309,7 +316,9 @@ public class FeedItemPermutorsTest {
         assertTrue("List should have 6 items", itemList.size() == 6);
 
         // Verify episodes from same feed maintain order
-        int lastA = -1, lastB = -1, lastC = -1;
+        int lastA = -1;
+        int lastB = -1;
+        int lastC = -1;
         for (FeedItem item : itemList) {
             if (item.getTitle().startsWith("A")) {
                 int episodeNum = Integer.parseInt(item.getTitle().substring(1));
@@ -361,7 +370,9 @@ public class FeedItemPermutorsTest {
         assertTrue("Legacy list should have 6 items", legacyList.size() == 6);
 
         // Verify episodes from same feed maintain order in legacy result
-        int lastA = -1, lastB = -1, lastC = -1;
+        int lastA = -1;
+        int lastB = -1;
+        int lastC = -1;
         for (FeedItem item : legacyList) {
             if (item.getTitle().startsWith("A")) {
                 int episodeNum = Integer.parseInt(item.getTitle().substring(1));
@@ -379,8 +390,8 @@ public class FeedItemPermutorsTest {
         }
     }
 
-        @Test
-        public void testSmartShuffleLegacyAscendingOrderMatchesForLowAndMultiEpisodeFeeds() {
+    @Test
+    public void testSmartShuffleLegacyAscendingOrderMatchesForLowAndMultiEpisodeFeeds() {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         UserPreferences.init(context);
         UserPreferences.setSmartShuffleSpreadEvenly(false);
@@ -390,13 +401,13 @@ public class FeedItemPermutorsTest {
         permutor.reorder(itemList);
 
         assertTrue("Low-episode feeds should be ordered oldest to newest",
-            indexOfTitle(itemList, "L11") < indexOfTitle(itemList, "L21"));
+                indexOfTitle(itemList, "L11") < indexOfTitle(itemList, "L21"));
         assertTrue("Multi-episode feeds should be ordered oldest to newest",
-            indexOfTitle(itemList, "M11") < indexOfTitle(itemList, "M21"));
-        }
+                indexOfTitle(itemList, "M11") < indexOfTitle(itemList, "M21"));
+    }
 
-        @Test
-        public void testSmartShuffleLegacyDescendingOrderMatchesForLowAndMultiEpisodeFeeds() {
+    @Test
+    public void testSmartShuffleLegacyDescendingOrderMatchesForLowAndMultiEpisodeFeeds() {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         UserPreferences.init(context);
         UserPreferences.setSmartShuffleSpreadEvenly(false);
@@ -406,10 +417,10 @@ public class FeedItemPermutorsTest {
         permutor.reorder(itemList);
 
         assertTrue("Low-episode feeds should be ordered newest to oldest",
-            indexOfTitle(itemList, "L21") < indexOfTitle(itemList, "L11"));
+                indexOfTitle(itemList, "L21") < indexOfTitle(itemList, "L11"));
         assertTrue("Multi-episode feeds should be ordered newest to oldest",
-            indexOfTitle(itemList, "M21") < indexOfTitle(itemList, "M11"));
-        }
+                indexOfTitle(itemList, "M21") < indexOfTitle(itemList, "M11"));
+    }
 
     /**
      * Generates a list with test data for smart shuffle testing.
@@ -460,8 +471,95 @@ public class FeedItemPermutorsTest {
         return itemList;
     }
 
+    @Test
+    public void testSmartShuffleLegacyKeepsChronologicalDirectionInBothGroups() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        UserPreferences.init(context);
+        UserPreferences.setSmartShuffleSpreadEvenly(false);
+
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW);
+        List<FeedItem> itemList = getSmartShuffleLegacyThresholdFeedList();
+        permutor.reorder(itemList);
+
+        StringBuilder order = new StringBuilder();
+        for (FeedItem item : itemList) {
+            order.append(item.getTitle()).append(' ');
+        }
+
+        // Every feed's episodes must appear oldest to newest, regardless of
+        // whether the feed is in the low-episode group or the multi-episode group.
+        Map<Long, Date> lastDatePerFeed = new HashMap<>();
+        for (FeedItem item : itemList) {
+            Date last = lastDatePerFeed.get(item.getFeedId());
+            if (last != null) {
+                assertTrue("Episodes of feed " + item.getFeed().getTitle()
+                                + " should be oldest to newest, but " + item.getTitle()
+                                + " (" + item.getPubDate() + ") came after " + last + ". Order: " + order,
+                        !item.getPubDate().before(last));
+            }
+            lastDatePerFeed.put(item.getFeedId(), item.getPubDate());
+        }
+    }
+
     /**
-     * Generates a list with both low-episode (<=5) and multi-episode (>5) feeds for legacy shuffle testing.
+     * Low-episode feeds with 3 and 4 episodes plus multi-episode feeds with 6 episodes,
+     * matching the real-world queue shape where the direction bug was reported.
+     */
+    private List<FeedItem> getSmartShuffleLegacyThresholdFeedList() {
+        List<FeedItem> itemList = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+
+        Feed low1 = new Feed(null, null, "Low 1");
+        low1.setId(11L);
+        for (int i = 1; i <= 3; i++) {
+            calendar.set(2019, 0, i);
+            FeedItem item = new FeedItem(1100 + i, "L1-" + i, null, null, calendar.getTime(), 0, low1);
+            item.setFeedId(11L);
+            item.setMedia(new FeedMedia(0, item, 1000, 0, 100, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0));
+            itemList.add(item);
+        }
+
+        Feed low2 = new Feed(null, null, "Low 2");
+        low2.setId(12L);
+        for (int i = 1; i <= 4; i++) {
+            calendar.set(2019, 1, i);
+            FeedItem item = new FeedItem(1200 + i, "L2-" + i, null, null, calendar.getTime(), 0, low2);
+            item.setFeedId(12L);
+            item.setMedia(new FeedMedia(0, item, 1000, 0, 100, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0));
+            itemList.add(item);
+        }
+
+        Feed multi1 = new Feed(null, null, "Multi 1");
+        multi1.setId(21L);
+        for (int i = 1; i <= 6; i++) {
+            calendar.set(2019, 2, i);
+            FeedItem item = new FeedItem(2100 + i, "M1-" + i, null, null, calendar.getTime(), 0, multi1);
+            item.setFeedId(21L);
+            item.setMedia(new FeedMedia(0, item, 1000, 0, 100, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0));
+            itemList.add(item);
+        }
+
+        Feed multi2 = new Feed(null, null, "Multi 2");
+        multi2.setId(22L);
+        for (int i = 1; i <= 6; i++) {
+            calendar.set(2019, 3, i);
+            FeedItem item = new FeedItem(2200 + i, "M2-" + i, null, null, calendar.getTime(), 0, multi2);
+            item.setFeedId(22L);
+            item.setMedia(new FeedMedia(0, item, 1000, 0, 100, null, null, null,
+                    System.currentTimeMillis(), null, 0, 0));
+            itemList.add(item);
+        }
+
+        Collections.shuffle(itemList, new Random(42));
+        return itemList;
+    }
+
+    /**
+     * Generates a list with both low-episode (fewer than 5) and multi-episode feeds
+     * for legacy shuffle testing.
      */
     private List<FeedItem> getSmartShuffleLegacyMixedFeedList() {
         List<FeedItem> itemList = new ArrayList<>();
