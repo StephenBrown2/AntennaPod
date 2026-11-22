@@ -58,6 +58,16 @@ public class ShareDialog extends BottomSheetDialogFragment {
             viewBinding.mediaAddressCard.setVisibility(View.GONE);
         }
 
+        if (ShareUtils.hasPodlinkToShare(item)) {
+            viewBinding.podlinkText.setText(ShareUtils.getPodlinkEpisodeUrl(item));
+            viewBinding.podlinkCard.setOnClickListener(v -> {
+                ShareUtils.shareLink(getContext(), ShareUtils.getPodlinkEpisodeUrl(item));
+                dismiss();
+            });
+        } else {
+            viewBinding.podlinkCard.setVisibility(View.GONE);
+        }
+
         SharedPreferences prefs = getContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         viewBinding.sharePositionCheckbox.setChecked(prefs.getBoolean(PREF_SHARE_EPISODE_START_AT, false));
         viewBinding.socialMessageText.setText(ShareUtils.getSocialFeedItemShareText(

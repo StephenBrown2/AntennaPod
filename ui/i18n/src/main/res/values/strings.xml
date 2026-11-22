@@ -937,6 +937,8 @@
     <string name="share_dialog_media_address">Media address</string>
     <string name="share_dialog_media_file_label">Media file</string>
     <string name="share_starting_position_label">Starting from</string>
+    <string name="share_podlink_label">pod.link</string>
+    <string name="share_antennapod_link_label">AntennaPod link</string>
 
     <!-- Audio controls -->
     <string name="audio_controls">Audio controls</string>
