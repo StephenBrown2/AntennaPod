@@ -65,7 +65,6 @@ import de.danoeh.antennapod.ui.episodeslist.FeedItemMenuHandler;
 import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
-import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.playback.cast.CastEnabledActivity;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import io.reactivex.rxjava3.core.Maybe;
@@ -206,9 +205,7 @@ public class AudioPlayerFragment extends Fragment implements
                     && PlaybackPreferences.getCurrentPlayerStatus() == PlaybackPreferences.PLAYER_STATUS_PLAYING) {
                 PlaybackController.bindToMedia3Service(getContext(), MediaController::pause);
             } else {
-                new PlaybackServiceStarter(getContext(), currentMedia)
-                        .callEvenIfRunning(true)
-                        .start();
+                new PlaybackServiceStarter(getContext(), currentMedia).start();
             }
         });
         butFF.setOnClickListener(v -> {
@@ -354,10 +351,6 @@ public class AudioPlayerFragment extends Fragment implements
             progressIndicator.setVisibility(View.VISIBLE);
         } else if (event.hasEnded()) {
             progressIndicator.setVisibility(View.GONE);
-        } else if (currentMedia != null && !currentMedia.localFileAvailable()) {
-            sbPosition.setSecondaryProgress((int) (event.getProgress() * sbPosition.getMax()));
-        } else {
-            sbPosition.setSecondaryProgress(0);
         }
     }
 
@@ -376,7 +369,7 @@ public class AudioPlayerFragment extends Fragment implements
             currentChapterIndex = Chapter.getAfterPosition(currentMedia.getChapters(), convertedPosition);
         }
         Log.d(TAG, "currentPosition " + Converter.getDurationStringLong(convertedPosition));
-        if (convertedPosition == Playable.INVALID_TIME || convertedDuration == Playable.INVALID_TIME) {
+        if (convertedPosition == FeedMedia.INVALID_TIME || convertedDuration == FeedMedia.INVALID_TIME) {
             Log.w(TAG, "Could not react to position observer update because of invalid time");
             return;
         }

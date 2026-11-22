@@ -3,15 +3,20 @@ package de.danoeh.antennapod.ui.share;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import de.danoeh.antennapod.ui.common.Converter;
 import java.io.File;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.Feed;
@@ -36,6 +41,25 @@ public class ShareUtils {
     }
 
     public static void shareFeedLink(Context context, Feed feed) {
+        if (!isPodlinkSafe(feed)) {
+            shareAntennaPodFeedLink(context, feed);
+            return;
+        }
+        String[] options = {context.getString(R.string.share_antennapod_link_label),
+            context.getString(R.string.share_podlink_label)};
+        new MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.share_label)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        shareAntennaPodFeedLink(context, feed);
+                    } else {
+                        shareLink(context, feed.getTitle() + "\n\n" + getPodlinkFeedUrl(feed));
+                    }
+                })
+                .show();
+    }
+
+    private static void shareAntennaPodFeedLink(Context context, Feed feed) {
         String feedurl = URLEncoder.encode(feed.getDownloadUrl());
         feedurl = feedurl.replace("htt", "%68%74%74"); // To not confuse users by having a url inside a url
         String text = feed.getTitle() + "\n\n"
@@ -46,6 +70,32 @@ public class ShareUtils {
 
     public static boolean hasLinkToShare(FeedItem item) {
         return item.getLinkWithFallback() != null;
+    }
+
+    public static boolean hasPodlinkToShare(FeedItem item) {
+        return item.getItemIdentifier() != null && item.getFeed() != null
+                && item.getFeed().getDownloadUrl() != null && !item.getFeed().isLocalFeed()
+                && isPodlinkSafe(item.getFeed());
+    }
+
+    private static boolean isPodlinkSafe(Feed feed) {
+        return !feed.getDownloadUrl().contains("?") && Uri.parse(feed.getDownloadUrl()).getUserInfo() == null
+                && (feed.getPreferences() == null
+                || (TextUtils.isEmpty(feed.getPreferences().getUsername())
+                    && TextUtils.isEmpty(feed.getPreferences().getPassword())));
+    }
+
+    public static String getPodlinkFeedUrl(Feed feed) {
+        return "https://pod.link/" + base64Url(feed.getDownloadUrl());
+    }
+
+    public static String getPodlinkEpisodeUrl(FeedItem item) {
+        return getPodlinkFeedUrl(item.getFeed()) + "/episode/" + base64Url(item.getItemIdentifier());
+    }
+
+    private static String base64Url(String text) {
+        return Base64.encodeToString(text.getBytes(StandardCharsets.UTF_8),
+                Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
     }
 
     public static String getSocialFeedItemShareText(Context context, FeedItem item,

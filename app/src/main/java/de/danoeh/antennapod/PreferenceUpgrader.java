@@ -28,6 +28,7 @@ public class PreferenceUpgrader {
 
     public static void checkUpgrades(Context context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        normalizePreferenceSchema();
         SharedPreferences upgraderPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         int oldVersion = upgraderPrefs.getInt(PREF_CONFIGURED_VERSION, -1);
         int newVersion = BuildConfig.VERSION_CODE;
@@ -37,6 +38,39 @@ public class PreferenceUpgrader {
 
             upgrade(oldVersion, newVersion, context);
             upgraderPrefs.edit().putInt(PREF_CONFIGURED_VERSION, newVersion).apply();
+        }
+    }
+
+    private static void normalizePreferenceSchema() {
+        if (!prefs.contains(UserPreferences.PREF_FOLLOW_QUEUE)) {
+            return;
+        }
+
+        try {
+            prefs.getInt(UserPreferences.PREF_FOLLOW_QUEUE, UserPreferences.ContinuousPlaybackMode.PLAY_NEXT.code);
+        } catch (ClassCastException e) {
+            UserPreferences.ContinuousPlaybackMode mode = UserPreferences.ContinuousPlaybackMode.PLAY_NEXT;
+            try {
+                boolean boolValue = prefs.getBoolean(UserPreferences.PREF_FOLLOW_QUEUE, true);
+                mode = boolValue
+                        ? UserPreferences.ContinuousPlaybackMode.PLAY_NEXT
+                        : UserPreferences.ContinuousPlaybackMode.OFF;
+            } catch (ClassCastException e2) {
+                try {
+                    String stringValue = prefs.getString(UserPreferences.PREF_FOLLOW_QUEUE,
+                            String.valueOf(UserPreferences.ContinuousPlaybackMode.PLAY_NEXT.code));
+                    if ("true".equalsIgnoreCase(stringValue)) {
+                        mode = UserPreferences.ContinuousPlaybackMode.PLAY_NEXT;
+                    } else if ("false".equalsIgnoreCase(stringValue)) {
+                        mode = UserPreferences.ContinuousPlaybackMode.OFF;
+                    } else {
+                        mode = UserPreferences.ContinuousPlaybackMode.fromCode(Integer.parseInt(stringValue));
+                    }
+                } catch (ClassCastException | NumberFormatException ignored) {
+                    // Keep default mode
+                }
+            }
+            prefs.edit().putInt(UserPreferences.PREF_FOLLOW_QUEUE, mode.code).apply();
         }
     }
 

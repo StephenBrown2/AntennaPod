@@ -18,8 +18,8 @@ import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.event.playback.PlaybackServiceEvent;
+import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.playback.MediaType;
-import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.playback.service.PlaybackServiceStarter;
@@ -47,7 +47,7 @@ public class ExternalPlayerFragment extends Fragment {
     private TextView feedName;
     private ProgressBar progressBar;
     private Disposable disposable;
-    private Playable currentMedia;
+    private FeedMedia currentMedia;
 
     public ExternalPlayerFragment() {
         super();
@@ -80,9 +80,7 @@ public class ExternalPlayerFragment extends Fragment {
                     && PlaybackPreferences.getCurrentPlayerStatus() == PlaybackPreferences.PLAYER_STATUS_PLAYING) {
                 PlaybackController.bindToMedia3Service(getContext(), controller -> controller.pause());
             } else {
-                new PlaybackServiceStarter(getContext(), currentMedia)
-                        .callEvenIfRunning(true)
-                        .start();
+                new PlaybackServiceStarter(getContext(), currentMedia).start();
             }
         });
         return root;
@@ -108,7 +106,7 @@ public class ExternalPlayerFragment extends Fragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPositionObserverUpdate(PlaybackPositionEvent event) {
-        if (event.getPosition() == Playable.INVALID_TIME || event.getDuration() == Playable.INVALID_TIME) {
+        if (event.getPosition() == FeedMedia.INVALID_TIME || event.getDuration() == FeedMedia.INVALID_TIME) {
             return;
         }
         progressBar.setProgress((int) ((double) event.getPosition() / event.getDuration() * 100));
@@ -145,7 +143,7 @@ public class ExternalPlayerFragment extends Fragment {
                         () -> ((MainActivity) getActivity()).setPlayerVisible(false));
     }
 
-    private void updateUi(Playable media) {
+    private void updateUi(FeedMedia media) {
         if (media == null) {
             return;
         }

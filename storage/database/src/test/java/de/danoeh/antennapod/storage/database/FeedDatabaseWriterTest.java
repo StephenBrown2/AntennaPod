@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -82,6 +83,32 @@ public class FeedDatabaseWriterTest {
         for (int i = 0; i < 6; i++) {
             assertEquals("item-" + i, dbItems.get(i).getItemIdentifier());
         }
+    }
+
+    @Test
+    public void testNewItemOnExistingFeedGetsFeedId() {
+        Feed initial = createFeed();
+        initial.getItems().add(createItem("item-0", "Item 0", initial));
+        Feed stored = FeedDatabaseWriter.updateFeed(context, initial, false);
+        long storedFeedId = stored.getId();
+        assertNotEquals(0L, storedFeedId);
+
+        Feed updated = createFeed();
+        updated.setId(storedFeedId);
+        updated.getItems().add(createItem("item-0", "Item 0", updated));
+        updated.getItems().add(createItem("item-1", "Item 1", updated));
+
+        Feed result = FeedDatabaseWriter.updateFeed(context, updated, false);
+        FeedItem newItem = null;
+        for (FeedItem item : result.getItems()) {
+            if ("item-1".equals(item.getItemIdentifier())) {
+                newItem = item;
+                break;
+            }
+        }
+
+        assertNotNull(newItem);
+        assertEquals("Newly merged item should carry its parent feed id", storedFeedId, newItem.getFeedId());
     }
 
     @Test

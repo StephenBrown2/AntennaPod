@@ -478,7 +478,11 @@
     <string name="button_action_rewind">Rewind</string>
     <string name="button_action_skip_episode">Skip episode</string>
     <string name="button_action_restart_episode">Restart episode</string>
-    <string name="pref_followQueue_sum">Jump to next queue item when playback completes</string>
+    <string name="pref_followQueue_sum">Choose what happens when an episode finishes playing</string>
+    <string name="pref_followQueue_title">Continuous playback</string>
+    <string name="pref_continuous_playback_off">Off</string>
+    <string name="pref_continuous_playback_next">Next queue item</string>
+    <string name="pref_continuous_playback_top">Top of queue</string>
     <string name="pref_auto_delete_playback_sum">Delete episode when playback completes</string>
     <string name="pref_auto_delete_playback_title">Delete after playing</string>
     <string name="pref_auto_delete_title">Automatic deletion</string>
@@ -506,7 +510,6 @@
     <string name="feed_every_12_hours">Every 12 hours</string>
     <string name="feed_every_24_hours">Every day</string>
     <string name="feed_every_72_hours">Every 3 days</string>
-    <string name="pref_followQueue_title">Continuous playback</string>
     <string name="pref_pauseOnHeadsetDisconnect_title">Headphones or Bluetooth disconnect</string>
     <string name="pref_unpauseOnHeadsetReconnect_title">Headphones reconnect</string>
     <string name="pref_unpauseOnBluetoothReconnect_title">Bluetooth reconnect</string>
@@ -572,8 +575,6 @@
     <string name="pref_fast_forward_sum">Customize the number of seconds to jump forward when the fast-forward button is clicked</string>
     <string name="pref_rewind">Rewind skip time</string>
     <string name="pref_rewind_sum">Customize the number of seconds to jump backwards when the rewind button is clicked</string>
-    <string name="pref_expandNotify_title">High notification priority</string>
-    <string name="pref_expandNotify_sum">This usually expands the notification to show playback buttons.</string>
     <string name="pref_persistNotify_title">Persistent playback controls</string>
     <string name="pref_persistNotify_sum">Keep notification and lockscreen controls when playback is paused</string>
     <string name="pref_compact_notification_buttons_dialog_error_exact">You must select exactly two items</string>
@@ -605,6 +606,8 @@
     <string name="remember_last_page">Remember last page</string>
     <string name="pref_delete_removes_from_queue_title">Delete removes from queue</string>
     <string name="pref_delete_removes_from_queue_sum">Automatically remove an episode from the queue when it is deleted</string>
+    <string name="pref_mark_played_removes_from_queue_title">Mark as played removes from queue</string>
+    <string name="pref_mark_played_removes_from_queue_sum">Automatically remove an episode from the queue when it is marked as played</string>
     <string name="pref_downloads_button_action_title">Play from downloads screen</string>
     <string name="pref_downloads_button_action_sum">Display play button instead of delete button on downloads screen</string>
     <string name="subscriptions_counter_greater_zero">Counter greater than zero</string>
@@ -942,6 +945,8 @@
     <string name="share_dialog_media_address">Media address</string>
     <string name="share_dialog_media_file_label">Media file</string>
     <string name="share_starting_position_label">Starting from</string>
+    <string name="share_podlink_label">pod.link</string>
+    <string name="share_antennapod_link_label">AntennaPod link</string>
 
     <!-- Audio controls -->
     <string name="audio_controls">Audio controls</string>
@@ -967,8 +972,6 @@
     <!-- Notification channels -->
     <string name="notification_group_errors">Errors</string>
     <string name="notification_group_news">News</string>
-    <string name="notification_channel_user_action">Action required</string>
-    <string name="notification_channel_user_action_description">Shown if your action is required, for example if you need to enter a password.</string>
     <string name="notification_channel_downloading">Downloading episodes</string>
     <string name="notification_channel_downloading_description">Shown while currently downloading episodes.</string>
     <string name="notification_channel_refreshing">Refreshing podcasts</string>

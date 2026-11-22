@@ -60,6 +60,13 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/queue_label">
+        <de.danoeh.antennapod.ui.preferences.preference.IntMaterialListPreference
+                android:defaultValue="1"
+                android:entries="@array/continuous_playback_options"
+                android:entryValues="@array/continuous_playback_values"
+                android:key="prefFollowQueue"
+                android:title="@string/pref_followQueue_title"
+                android:summary="@string/pref_followQueue_sum"/>
         <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
                 android:defaultValue="BACK"
                 android:entries="@array/enqueue_location_options"
@@ -72,12 +79,6 @@
                 android:key="prefEnqueueDownloaded"
                 android:summary="@string/pref_enqueue_downloaded_summary"
                 android:title="@string/pref_enqueue_downloaded_title" />
-        <SwitchPreferenceCompat
-                android:defaultValue="true"
-                android:enabled="true"
-                android:key="prefFollowQueue"
-                android:summary="@string/pref_followQueue_sum"
-                android:title="@string/pref_followQueue_title"/>
         <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
                 android:defaultValue="30"
                 android:entries="@array/smart_mark_as_played_values"
@@ -95,5 +96,11 @@
                 android:key="prefSkipKeepsEpisode"
                 android:summary="@string/pref_skip_keeps_episodes_sum"
                 android:title="@string/pref_skip_keeps_episodes_title"/>
+        <SwitchPreferenceCompat
+                android:defaultValue="false"
+                android:enabled="true"
+                android:key="prefMarkPlayedRemovesFromQueue"
+                android:summary="@string/pref_mark_played_removes_from_queue_sum"
+                android:title="@string/pref_mark_played_removes_from_queue_title"/>
     </PreferenceCategory>
 </PreferenceScreen>

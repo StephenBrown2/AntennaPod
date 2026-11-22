@@ -280,4 +280,17 @@
         <item>@string/statistics_label</item>
         <item>@string/remember_last_page</item>
     </string-array>
+
+    <!-- Continuous Playback Mode -->
+    <string-array name="continuous_playback_options">
+        <item>@string/pref_continuous_playback_off</item>
+        <item>@string/pref_continuous_playback_next</item>
+        <item>@string/pref_continuous_playback_top</item>
+    </string-array>
+
+    <string-array name="continuous_playback_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 </resources>

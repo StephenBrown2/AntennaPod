@@ -9,7 +9,6 @@ import android.view.KeyEvent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.preference.PreferenceManager;
 
 import de.danoeh.antennapod.model.feed.FeedOrder;
@@ -51,7 +50,6 @@ public abstract class UserPreferences {
     public static final String PREF_DRAWER_ITEM_ORDER = "prefDrawerItemOrder";
     public static final String PREF_DRAWER_FEED_ORDER = "prefDrawerFeedOrder";
     public static final String PREF_DRAWER_FEED_COUNTER = "prefDrawerFeedIndicator";
-    public static final String PREF_EXPANDED_NOTIFICATION = "prefExpandNotify";
     public static final String PREF_USE_EPISODE_COVER = "prefEpisodeCover";
     public static final String PREF_SHOW_TIME_LEFT = "showTimeLeft";
     public static final String PREF_PERSISTENT_NOTIFICATION = "prefPersistNotify";
@@ -116,6 +114,7 @@ public abstract class UserPreferences {
     // Other
     private static final String PREF_DATA_FOLDER = "prefDataFolder";
     public static final String PREF_DELETE_REMOVES_FROM_QUEUE = "prefDeleteRemovesFromQueue";
+    public static final String PREF_MARK_PLAYED_REMOVES_FROM_QUEUE = "prefMarkPlayedRemovesFromQueue";
     public static final String PREF_DOWNLOADS_BUTTON_ACTION = "prefDownloadsButtonAction";
     private static final String PREF_AUTOMATIC_EXPORT_FOLDER = "prefAutomaticExportFolder";
     private static final String PREF_FIRST_SUBSCRIPTION_TIME = "prefFirstSubscriptionTime";
@@ -341,19 +340,6 @@ public abstract class UserPreferences {
     }
 
     /**
-     * Returns notification priority.
-     *
-     * @return NotificationCompat.PRIORITY_MAX or NotificationCompat.PRIORITY_DEFAULT
-     */
-    public static int getNotifyPriority() {
-        if (prefs.getBoolean(PREF_EXPANDED_NOTIFICATION, false)) {
-            return NotificationCompat.PRIORITY_MAX;
-        } else {
-            return NotificationCompat.PRIORITY_DEFAULT;
-        }
-    }
-
-    /**
      * Returns true if notifications are persistent
      *
      * @return {@code true} if notifications are persistent, {@code false}  otherwise
@@ -375,6 +361,25 @@ public abstract class UserPreferences {
 
     public enum EnqueueLocation {
         BACK, FRONT, AFTER_CURRENTLY_PLAYING, RANDOM
+    }
+
+    public enum ContinuousPlaybackMode {
+        OFF(0), PLAY_NEXT(1), PLAY_TOP(2);
+
+        public final int code;
+
+        ContinuousPlaybackMode(int code) {
+            this.code = code;
+        }
+
+        public static ContinuousPlaybackMode fromCode(int code) {
+            for (ContinuousPlaybackMode mode : ContinuousPlaybackMode.values()) {
+                if (mode.code == code) {
+                    return mode;
+                }
+            }
+            return OFF;
+        }
     }
 
     @NonNull
@@ -417,16 +422,48 @@ public abstract class UserPreferences {
                 String.valueOf(KeyEvent.KEYCODE_MEDIA_REWIND)));
     }
 
-
-    public static boolean isFollowQueue() {
-        return prefs.getBoolean(PREF_FOLLOW_QUEUE, true);
+    /**
+     * Get the current continuous playback mode.
+     * Migrates from old boolean or string preference if necessary.
+     * @return ContinuousPlaybackMode representing what should play next
+     */
+    @NonNull
+    public static ContinuousPlaybackMode getContinuousPlaybackMode() {
+        try {
+            int intValue = prefs.getInt(PREF_FOLLOW_QUEUE, ContinuousPlaybackMode.PLAY_NEXT.code);
+            return ContinuousPlaybackMode.fromCode(intValue);
+        } catch (ClassCastException e) {
+            Log.w(TAG, "PREF_FOLLOW_QUEUE is not integer. Expected PreferenceUpgrader to normalize this.", e);
+            return ContinuousPlaybackMode.PLAY_NEXT;
+        }
     }
 
     /**
-     * Set to true to enable Continuous Playback
+     * Set the continuous playback mode.
+     * @param mode The ContinuousPlaybackMode to set
      */
+    public static void setContinuousPlaybackMode(@NonNull ContinuousPlaybackMode mode) {
+        prefs.edit().putInt(PREF_FOLLOW_QUEUE, mode.code).apply();
+    }
+
+    /**
+     * Returns true if continuous playback is enabled (not OFF mode).
+     *
+     * @deprecated Use {@link #getContinuousPlaybackMode()} instead.
+     */
+    @Deprecated
+    public static boolean isFollowQueue() {
+        return getContinuousPlaybackMode() != ContinuousPlaybackMode.OFF;
+    }
+
+    /**
+     * Set to true to enable Continuous Playback (PLAY_NEXT mode).
+     *
+     * @deprecated Use {@link #setContinuousPlaybackMode(ContinuousPlaybackMode)} instead.
+     */
+    @Deprecated
     public static void setFollowQueue(boolean value) {
-        prefs.edit().putBoolean(UserPreferences.PREF_FOLLOW_QUEUE, value).apply();
+        setContinuousPlaybackMode(value ? ContinuousPlaybackMode.PLAY_NEXT : ContinuousPlaybackMode.OFF);
     }
 
     public static boolean shouldSkipKeepEpisode() {
@@ -451,6 +488,10 @@ public abstract class UserPreferences {
 
     public static boolean shouldDeleteRemoveFromQueue() {
         return prefs.getBoolean(PREF_DELETE_REMOVES_FROM_QUEUE, false);
+    }
+
+    public static boolean shouldMarkPlayedRemoveFromQueue() {
+        return prefs.getBoolean(PREF_MARK_PLAYED_REMOVES_FROM_QUEUE, false);
     }
 
     public static boolean shouldDownloadsButtonActionPlay() {

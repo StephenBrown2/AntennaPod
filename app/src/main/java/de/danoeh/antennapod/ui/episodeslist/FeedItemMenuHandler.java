@@ -288,6 +288,9 @@ public class FeedItemMenuHandler {
             case FeedItem.PLAYED:
                 message = fragment.getResources().getQuantityString(
                         R.plurals.marked_as_played_message, 1, 1);
+                if (UserPreferences.shouldMarkPlayedRemoveFromQueue() && item.isTagged(FeedItem.TAG_QUEUE)) {
+                    DBWriter.removeQueueItem(fragment.requireContext(), true, item);
+                }
                 break;
         }
 
