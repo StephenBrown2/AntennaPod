@@ -85,6 +85,10 @@
                 android:key="prefSmartMarkAsPlayedSecs"
                 android:summary="@string/pref_smart_mark_as_played_sum"
                 android:title="@string/pref_smart_mark_as_played_title"/>
+        <Preference
+                android:key="prefFeedPriorities"
+                android:summary="@string/feed_priorities_sum"
+                android:title="@string/feed_priorities_label"/>
         <SwitchPreferenceCompat
                 android:defaultValue="true"
                 android:enabled="true"

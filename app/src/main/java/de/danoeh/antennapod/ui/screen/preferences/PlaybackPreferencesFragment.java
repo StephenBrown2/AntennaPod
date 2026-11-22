@@ -20,6 +20,7 @@ public class PlaybackPreferencesFragment extends AnimatedPreferenceFragment {
     private static final String PREF_PLAYBACK_SPEED_LAUNCHER = "prefPlaybackSpeedLauncher";
     private static final String PREF_PLAYBACK_REWIND_DELTA_LAUNCHER = "prefPlaybackRewindDeltaLauncher";
     private static final String PREF_PLAYBACK_FAST_FORWARD_DELTA_LAUNCHER = "prefPlaybackFastForwardDeltaLauncher";
+    private static final String PREF_FEED_PRIORITIES = "prefFeedPriorities";
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -48,6 +49,12 @@ public class PlaybackPreferencesFragment extends AnimatedPreferenceFragment {
         });
         findPreference(PREF_PLAYBACK_FAST_FORWARD_DELTA_LAUNCHER).setOnPreferenceClickListener(preference -> {
             SkipPreferenceDialog.showSkipPreference(activity, SkipPreferenceDialog.SkipDirection.SKIP_FORWARD, null);
+            return true;
+        });
+        findPreference(PREF_FEED_PRIORITIES).setOnPreferenceClickListener(preference -> {
+            getParentFragmentManager().beginTransaction()
+                    .replace(getId(), new FeedPriorityFragment())
+                    .addToBackStack(getString(R.string.feed_priorities_label)).commit();
             return true;
         });
         if (Build.VERSION.SDK_INT >= 31) {
