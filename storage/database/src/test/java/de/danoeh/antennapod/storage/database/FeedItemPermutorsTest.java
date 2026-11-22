@@ -14,6 +14,7 @@ import java.util.List;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 import static org.junit.Assert.assertNotNull;
@@ -182,6 +183,20 @@ public class FeedItemPermutorsTest {
         assertTrue(checkIdOrder(itemList, 1, 3, 2)); // before sorting
         permutor.reorder(itemList);
         assertTrue(checkIdOrder(itemList, 2, 1, 3)); // after sorting
+    }
+
+    @Test
+    public void testPermutorSortsByFeedPriorityFirst() {
+        Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(SortOrder.DATE_OLD_NEW);
+
+        List<FeedItem> itemList = getTestList();
+        FeedPreferences preferences = new FeedPreferences(0, FeedPreferences.AutoDownloadSetting.GLOBAL,
+                FeedPreferences.AutoDeleteAction.GLOBAL, null, FeedPreferences.NewEpisodesAction.GLOBAL, null, null);
+        preferences.setPriority(5);
+        itemList.get(1).getFeed().setPreferences(preferences);
+        assertTrue(checkIdOrder(itemList, 1, 3, 2));
+        permutor.reorder(itemList);
+        assertTrue(checkIdOrder(itemList, 3, 1, 2));
     }
 
     /**

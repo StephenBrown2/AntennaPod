@@ -115,6 +115,7 @@ public class FeedPreferences implements Serializable {
     private int feedSkipEnding;
     private SkipSilence feedSkipSilence;
     private boolean showEpisodeNotification;
+    private int priority;
     private final Set<String> tags = new HashSet<>();
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, AutoDeleteAction autoDeleteAction,
@@ -282,6 +283,14 @@ public class FeedPreferences implements Serializable {
 
     public int getFeedSkipEnding() {
         return feedSkipEnding;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public void setFeedSkipSilence(SkipSilence skipSilence) {

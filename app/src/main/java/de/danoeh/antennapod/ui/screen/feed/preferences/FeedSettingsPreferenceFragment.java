@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -42,6 +43,7 @@ import de.danoeh.antennapod.storage.database.FeedDatabaseWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.synchronization.AuthenticationDialog;
 import de.danoeh.antennapod.ui.screen.feed.RenameFeedDialog;
+import de.danoeh.antennapod.ui.common.databinding.EditTextDialogBinding;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeOnSubscribe;
@@ -66,6 +68,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_NEW_EPISODES_ACTION = "feedNewEpisodesAction";
     private static final String PREF_FEED_PLAYBACK_SPEED = "feedPlaybackSpeed";
     private static final String PREF_AUTO_SKIP = "feedAutoSkip";
+    private static final String PREF_PRIORITY = "feedPriority";
     private static final String PREF_NOTIFICATION = "episodeNotification";
     private static final String PREF_RENAME = "rename";
     private static final String PREF_TAGS = "tags";
@@ -177,6 +180,27 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                 }
             }.show();
             return false;
+        });
+        updatePrioritySummary();
+        findPreference(PREF_PRIORITY).setOnPreferenceClickListener(preference -> {
+            EditTextDialogBinding binding = EditTextDialogBinding.inflate(getLayoutInflater());
+            binding.textInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+            binding.textInput.setText(String.valueOf(feedPreferences.getPriority()));
+            new MaterialAlertDialogBuilder(getContext())
+                    .setTitle(R.string.pref_feed_priority)
+                    .setView(binding.getRoot())
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        try {
+                            feedPreferences.setPriority(Integer.parseInt(binding.textInput.getText().toString()));
+                        } catch (NumberFormatException e) {
+                            feedPreferences.setPriority(0);
+                        }
+                        DBWriter.setFeedPreferences(feedPreferences);
+                        updatePrioritySummary();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
         });
         findPreference(PREF_FEED_PLAYBACK_SPEED).setOnPreferenceClickListener(this::showPlaybackSpeedDialog);
         findPreference(PREF_EPISODE_FILTER).setOnPreferenceClickListener(preference -> {
@@ -306,6 +330,11 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             alert.show();
             return true;
         });
+    }
+
+    private void updatePrioritySummary() {
+        findPreference(PREF_PRIORITY).setSummary(
+                getString(R.string.pref_feed_priority_sum, feedPreferences.getPriority()));
     }
 
     private void updateAutoDeleteSummary() {

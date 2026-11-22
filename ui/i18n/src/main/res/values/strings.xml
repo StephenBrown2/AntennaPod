@@ -553,6 +553,8 @@
     <string name="pref_feed_skip_sum">Skip introductions and ending credits</string>
     <string name="pref_feed_skip_ending">Skip last</string>
     <string name="pref_feed_skip_intro">Skip first</string>
+    <string name="pref_feed_priority">Queue priority</string>
+    <string name="pref_feed_priority_sum">%d. When sorting the queue, episodes of podcasts with higher priority come first</string>
     <plurals name="pref_feed_skip_ending_snackbar">
         <item quantity="one">Skipped last %d second</item>
         <item quantity="other">Skipped last %d seconds</item>

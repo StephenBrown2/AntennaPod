@@ -95,10 +95,19 @@ public class FeedItemPermutors {
             final Comparator<FeedItem> comparator2 = comparator;
             permutor = (queue) -> Collections.sort(queue, comparator2);
         }
-        return permutor;
+        final Permutor<FeedItem> permutor2 = permutor;
+        return (queue) -> {
+            permutor2.reorder(queue);
+            Collections.sort(queue, (f1, f2) -> Integer.compare(priority(f2), priority(f1)));
+        };
     }
 
     // Null-safe accessors
+
+    private static int priority(@Nullable FeedItem item) {
+        return (item != null && item.getFeed() != null && item.getFeed().getPreferences() != null)
+                ? item.getFeed().getPreferences().getPriority() : 0;
+    }
 
     @NonNull
     private static Date pubDate(@Nullable FeedItem item) {

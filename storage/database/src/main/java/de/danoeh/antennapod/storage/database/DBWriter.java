@@ -442,6 +442,13 @@ public class DBWriter {
             // do not shuffle the list on every change
             return;
         }
+        List<FeedItem> itemsWithFeedId = new ArrayList<>();
+        for (FeedItem item : queue) {
+            if (item.getFeedId() != 0) {
+                itemsWithFeedId.add(item);
+            }
+        }
+        DBReader.loadFeedDataOfFeedItemList(itemsWithFeedId);
         Permutor<FeedItem> permutor = FeedItemPermutors.getPermutor(sortOrder);
         permutor.reorder(queue);
 
