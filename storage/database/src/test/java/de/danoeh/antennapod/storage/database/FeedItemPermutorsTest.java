@@ -9,6 +9,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import de.danoeh.antennapod.model.feed.Feed;
@@ -197,6 +198,27 @@ public class FeedItemPermutorsTest {
         assertTrue(checkIdOrder(itemList, 1, 3, 2));
         permutor.reorder(itemList);
         assertTrue(checkIdOrder(itemList, 3, 1, 2));
+    }
+
+    @Test
+    public void testSmartShuffle() {
+        List<FeedItem> singles = new ArrayList<>();
+        for (int i = 3; i >= 1; i--) {
+            singles.add(new FeedItem(i, "", null, null, new Date(i), 0, null));
+            singles.get(singles.size() - 1).setFeedId(i);
+        }
+        FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW).reorder(singles);
+        assertTrue(checkIdOrder(singles, 1, 2, 3));
+
+        List<FeedItem> itemList = new ArrayList<>();
+        for (int i = 9; i >= 1; i--) {
+            itemList.add(new FeedItem(i, "", null, null, new Date(i), 0, null));
+            itemList.get(itemList.size() - 1).setFeedId(i % 3);
+        }
+        FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_OLD_NEW).reorder(itemList);
+        assertTrue(checkIdOrder(itemList, 1, 2, 3, 4, 5, 6, 7, 8, 9));
+        FeedItemPermutors.getPermutor(SortOrder.SMART_SHUFFLE_NEW_OLD).reorder(itemList);
+        assertTrue(checkIdOrder(itemList, 9, 8, 7, 6, 5, 4, 3, 2, 1));
     }
 
     /**

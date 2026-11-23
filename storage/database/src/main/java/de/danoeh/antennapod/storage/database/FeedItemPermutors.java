@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -97,8 +97,16 @@ public class FeedItemPermutors {
         }
         final Permutor<FeedItem> permutor2 = permutor;
         return (queue) -> {
-            permutor2.reorder(queue);
             Collections.sort(queue, (f1, f2) -> Integer.compare(priority(f2), priority(f1)));
+            int start = 0;
+            while (start < queue.size()) {
+                int end = start + 1;
+                while (end < queue.size() && priority(queue.get(end)) == priority(queue.get(start))) {
+                    end++;
+                }
+                permutor2.reorder(queue.subList(start, end));
+                start = end;
+            }
         };
     }
 
@@ -148,11 +156,10 @@ public class FeedItemPermutors {
      * episodes from the same feed. This is what "Smart Shuffle" tries to accomplish.
      *
      * Assume the queue looks like this: `ABCDDEEEEEEEEEE`.
-     * This method first starts with a queue of the final size, where each slot is empty (null).
-     * It takes the podcast with most episodes (`E`) and places the episodes spread out in the queue: `EE_E_EE_E_EE_EE`.
-     * The podcast with the second-most number of episodes (`D`) is then
-     * placed spread-out in the *available* slots: `EE_EDEE_EDEE_EE`.
-     * This continues, until we end up with: `EEBEDEECEDEEAEE`.
+     * Each episode gets a target position from how far it is through its podcast's episodes:
+     * the k-th of n episodes aims for k / (n + 1) of the way down the queue.
+     * The queue is sorted by these positions, with ties broken by pubdate,
+     * so we end up with: `EEEDEEABCEEDEEE`.
      *
      * Note that episodes aren't strictly ordered in terms of pubdate, but episodes of each feed are.
      *
@@ -175,40 +182,17 @@ public class FeedItemPermutors {
         Comparator<FeedItem> itemComparator = ascending
                 ? (f1, f2) -> f1.getPubDate().compareTo(f2.getPubDate())
                 : (f1, f2) -> f2.getPubDate().compareTo(f1.getPubDate());
-        List<List<FeedItem>> feeds = new ArrayList<>();
-        for (Map.Entry<Long, List<FeedItem>> mapEntry : map.entrySet()) {
-            Collections.sort(mapEntry.getValue(), itemComparator);
-            feeds.add(mapEntry.getValue());
-        }
-
-        ArrayList<Integer> emptySlots = new ArrayList<>();
-        for (int i = 0; i < queue.size(); i++) {
-            queue.set(i, null);
-            emptySlots.add(i);
-        }
-
-        // Starting with the largest feed, place items spread out through the empty slots in the queue
-        Collections.sort(feeds, (f1, f2) -> Integer.compare(f2.size(), f1.size()));
-        for (List<FeedItem> feedItems : feeds) {
-            double spread = (double) emptySlots.size() / (feedItems.size() + 1);
-            Iterator<Integer> emptySlotIterator = emptySlots.iterator();
-            int skipped = 0;
-            int placed = 0;
-            while (emptySlotIterator.hasNext()) {
-                int nextEmptySlot = emptySlotIterator.next();
-                skipped++;
-                if (skipped >= spread * (placed + 1)) {
-                    if (queue.get(nextEmptySlot) != null) {
-                        throw new RuntimeException("Slot to be placed in not empty");
-                    }
-                    queue.set(nextEmptySlot, feedItems.get(placed));
-                    emptySlotIterator.remove();
-                    placed++;
-                    if (placed == feedItems.size()) {
-                        break;
-                    }
-                }
+        Map<FeedItem, Double> position = new IdentityHashMap<>();
+        for (List<FeedItem> feedItems : map.values()) {
+            Collections.sort(feedItems, itemComparator);
+            for (int i = 0; i < feedItems.size(); i++) {
+                position.put(feedItems.get(i), (i + 1.0) / (feedItems.size() + 1));
             }
         }
+
+        Collections.sort(queue, (f1, f2) -> {
+            int result = Double.compare(position.get(f1), position.get(f2));
+            return result != 0 ? result : itemComparator.compare(f1, f2);
+        });
     }
 }
