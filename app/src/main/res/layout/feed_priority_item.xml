@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="8dp"
+    android:paddingStart="0dp"
+    android:paddingEnd="16dp"
+    android:foreground="?attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="48dp"
+        android:layout_height="40dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="0dp"
+        android:paddingVertical="12dp"
+        android:contentDescription="@string/sort"
+        android:src="?attr/dragview_background" />
+
+    <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="48dp"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/coverImage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/titleLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AntennaPod.TextView.ListItemPrimaryTitle" />
+
+        <TextView
+            android:id="@+id/authorLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AntennaPod.TextView.ListItemSecondaryTitle" />
+
+    </LinearLayout>
+
+</LinearLayout>

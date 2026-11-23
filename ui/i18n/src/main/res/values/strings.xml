@@ -558,6 +558,15 @@
     <string name="feed_priorities_label">Podcast priorities</string>
     <string name="feed_priorities_sum">Drag podcasts between priority levels. Higher priorities come first when the queue is sorted</string>
     <string name="feed_priority_header">Priority %d</string>
+    <string name="feed_priority_unused">Not in use</string>
+    <string name="feed_priority_edit">Edit priority</string>
+    <string name="feed_priority_merge_confirm">Priority %1$d already has podcasts. Move the podcasts of priority %2$d into it?</string>
+    <string name="expand_all">Expand all</string>
+    <string name="collapse_all">Collapse all</string>
+    <plurals name="num_podcasts">
+        <item quantity="one">%d podcast</item>
+        <item quantity="other">%d podcasts</item>
+    </plurals>
     <plurals name="pref_feed_skip_ending_snackbar">
         <item quantity="one">Skipped last %d second</item>
         <item quantity="other">Skipped last %d seconds</item>
